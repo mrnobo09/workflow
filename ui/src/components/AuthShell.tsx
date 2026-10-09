@@ -39,7 +39,7 @@ export function AuthShell({
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-slate-500">DocFlow</p>
+        <p className="relative text-xs text-slate-500">Workflow</p>
       </aside>
 
       <main className="flex items-center justify-center px-5 py-10 sm:px-10">

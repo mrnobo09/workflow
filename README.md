@@ -1,6 +1,6 @@
-# DocFlow
+# Workflow
 
-DocFlow is a small multi-tenant app that turns a spoken maintenance note into jobs and notifies the people who should do the work.
+Workflow is a small multi-tenant app that turns a spoken maintenance note into jobs and notifies the people who should do the work.
 
 A requester records audio in the browser. The API stores the audio, transcribes it while it is still being recorded, and asks an LLM to split the transcript into jobs (a leaking tap, a dead light, a roof leak). Each job is assigned to a worker in the same company whose trade matches, and the manager can see every job in that company.
 
@@ -105,7 +105,11 @@ The API is Express 5 and Mongoose. The UI is React, TypeScript, Vite, and Tailwi
 
 ## Run locally
 
+MongoDB uses `mongo/keyfile` to authenticate replica set members to each other. That file is a secret, so it is gitignored. Create one locally before the first start (MongoDB accepts 6 to 1024 characters, and the file must not be group-readable):
+
 ```bash
+openssl rand -base64 756 > mongo/keyfile
+chmod 400 mongo/keyfile
 docker compose up -d
 ```
 

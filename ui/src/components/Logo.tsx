@@ -8,7 +8,7 @@ export function Logo({ inverted = false, compact = false }: { inverted?: boolean
       </div>
       {compact ? null : (
         <span className={`text-lg font-semibold tracking-tight ${inverted ? "text-white" : "text-slate-900"}`}>
-          DocFlow
+          Workflow
         </span>
       )}
     </div>

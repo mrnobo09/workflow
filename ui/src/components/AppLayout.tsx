@@ -92,8 +92,8 @@ export function AppLayout() {
             <div className="flex min-w-0 items-center gap-3">
               <Logo compact />
               <div className="min-w-0 leading-tight">
-                <p className="truncate text-sm font-semibold text-slate-900">{user.companyName || "DocFlow"}</p>
-                <p className="text-xs text-slate-500">DocFlow</p>
+                <p className="truncate text-sm font-semibold text-slate-900">{user.companyName || "Workflow"}</p>
+                <p className="text-xs text-slate-500">Workflow</p>
               </div>
             </div>
             {isManager ? (
