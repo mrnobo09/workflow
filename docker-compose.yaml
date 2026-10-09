@@ -1,0 +1,67 @@
+name: docflow
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: local-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        cp /opt/mongo-keyfile /tmp/mongo-keyfile
+        chmod 400 /tmp/mongo-keyfile
+        chown 999:999 /tmp/mongo-keyfile
+        exec docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all --keyFile /tmp/mongo-keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo/keyfile:/opt/mongo-keyfile:ro
+
+  minio:
+    image: pgsty/silo:latest
+    container_name: local-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: local-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: local-whisper
+    restart: always
+    ports:
+      - "9002:9000"
+    environment:
+      ASR_ENGINE: faster_whisper
+      ASR_MODEL: base
+      ASR_DEVICE: cpu
+    volumes:
+      - whisper_cache:/root/.cache
+
+volumes:
+  mongo_data:
+    name: db_mongo_data
+    external: true
+  minio_data:
+  redis_data:
+  whisper_cache:

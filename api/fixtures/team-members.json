@@ -1,0 +1,5 @@
+[
+  { "name": "Ada Lovelace", "email": "ada@example.com", "accountType": "user" },
+  { "name": "Eli Spark", "email": "eli@example.com", "accountType": "worker", "specialty": "electrician" },
+  { "name": "Pia Pipe", "email": "pia@example.com", "accountType": "worker", "specialty": "plumber" }
+]
