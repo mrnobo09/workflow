@@ -24,3 +24,7 @@ export async function addTeamMember(input: NewMember) {
   const { data } = await api.post<{ member: Member }>("/team", input);
   return data.member;
 }
+
+export async function removeTeamMember(id: string) {
+  await api.delete(`/team/${id}`);
+}

@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { isValidObjectId } from "mongoose";
+import { JobModel } from "../../models/job.js";
 import { TenantModel } from "../../models/tenant.js";
 import { UserModel } from "../../models/user.js";
 import { isDuplicateKey, type TeamMemberInput } from "../../schemas/company.js";
@@ -75,6 +77,34 @@ export async function createTeamMember(manager: PublicAccount, body: unknown) {
     }
 
     return toMemberView(saved);
+}
+
+export async function deleteTeamMember(manager: PublicAccount, memberId: string) {
+    if (!isValidObjectId(memberId) || memberId === manager.id) {
+        throw new TeamError(404, "Team member not found");
+    }
+
+    const member = await UserModel.findOne({
+        _id: memberId,
+        tenantId: manager.tenantId,
+        accountType: { $in: ["user", "worker"] },
+    }).select("_id");
+    if (!member) throw new TeamError(404, "Team member not found");
+
+    const activeJobs = await JobModel.exists({
+        tenantId: manager.tenantId,
+        assignedTo: member._id,
+        status: "in_progress",
+    });
+    if (activeJobs) {
+        throw new TeamError(409, "Complete the worker's in-progress jobs before removing them");
+    }
+
+    await JobModel.updateMany(
+        { tenantId: manager.tenantId, assignedTo: member._id, status: { $in: ["draft", "assigned"] } },
+        { assignedTo: null, status: "draft", lastChangedBy: manager.id },
+    );
+    await UserModel.deleteOne({ _id: member._id, tenantId: manager.tenantId });
 }
 
 export function toMemberView(user: {

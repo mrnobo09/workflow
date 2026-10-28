@@ -2,7 +2,7 @@ import { Router } from "express";
 import { requireAccount } from "../middleware/requireAccount.js";
 import { requireRole } from "../middleware/requireRole.js";
 import { UserModel } from "../models/user.js";
-import { TeamError, createTeamMember, toMemberView } from "../services/team/createMember.js";
+import { TeamError, createTeamMember, deleteTeamMember, toMemberView } from "../services/team/createMember.js";
 
 const teamRouter = Router();
 
@@ -22,6 +22,17 @@ teamRouter.post("/", async (req, res) => {
     } catch (error) {
         if (error instanceof TeamError) return res.status(error.status).json({ error: error.message });
         return res.status(500).json({ error: "Could not add the person" });
+    }
+});
+
+teamRouter.delete("/:id", async (req, res) => {
+    if (!req.account) return res.status(401).json({ error: "Missing session" });
+    try {
+        await deleteTeamMember(req.account, String(req.params.id ?? ""));
+        return res.status(204).end();
+    } catch (error) {
+        if (error instanceof TeamError) return res.status(error.status).json({ error: error.message });
+        return res.status(500).json({ error: "Could not remove the person" });
     }
 });
 

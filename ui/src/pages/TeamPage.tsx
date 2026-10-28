@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { AccountType } from "../api/auth.ts";
 import { apiErrorMessage } from "../api/client.ts";
 import type { Specialty } from "../api/specialties.ts";
-import { addTeamMember, listTeam, type Member, type NewMember } from "../api/team.ts";
+import { addTeamMember, listTeam, removeTeamMember, type Member, type NewMember } from "../api/team.ts";
 import { Field, FormError } from "../components/Field.tsx";
 import { Tabs } from "../components/JobCard.tsx";
 import { PageHeader } from "../components/PageHeader.tsx";
@@ -119,6 +119,7 @@ export function TeamPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<RoleFilter>("all");
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   useEffect(() => {
     listTeam()
@@ -135,6 +136,20 @@ export function TeamPage() {
 
   const visible = filter === "all" ? members : members.filter((member) => member.accountType === filter);
   const { label: specialtyLabel } = useSpecialties();
+
+  async function removeMember(member: Member) {
+    if (!window.confirm(`Remove ${member.name} from this organization?`)) return;
+    setError("");
+    setRemovingId(member.id);
+    try {
+      await removeTeamMember(member.id);
+      setMembers((current) => current.filter((entry) => entry.id !== member.id));
+    } catch (caught) {
+      setError(apiErrorMessage(caught, "Could not remove this person"));
+    } finally {
+      setRemovingId(null);
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -184,6 +199,16 @@ export function TeamPage() {
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${roleStyle[member.accountType]}`}>
                       {roleLabel[member.accountType]}
                     </span>
+                    {member.accountType !== "manager" ? (
+                      <button
+                        type="button"
+                        onClick={() => void removeMember(member)}
+                        disabled={removingId === member.id}
+                        className="text-xs font-medium text-rose-700 hover:text-rose-900 disabled:cursor-wait disabled:opacity-50"
+                      >
+                        {removingId === member.id ? "Removing…" : "Remove"}
+                      </button>
+                    ) : null}
                   </div>
                 </li>
               ))}

@@ -40,19 +40,43 @@ function systemPrompt() {
     ].join("\n");
 }
 
+function responseText(value: unknown): string {
+    if (typeof value === "string") return value;
+    if (!Array.isArray(value)) return "";
+    return value.flatMap((block: unknown) => {
+        if (typeof block !== "object" || block === null || !("text" in block)) return [];
+        return typeof block.text === "string" ? [block.text] : [];
+    }).join("\n");
+}
+
 export async function extractJobs(transcript: string): Promise<ExtractedJob[]> {
-    if (!config.openRouterApiKey) {
-        throw new Error("OPENROUTER_API_KEY is not set");
+    const apiKey = config.llmApiKey;
+    const baseUrl = config.llmApiBaseUrl.replace(/\/+$/, "");
+    const isAnthropic = config.llmApiFormat === "anthropic";
+    if (!apiKey && !baseUrl.includes("127.0.0.1") && !baseUrl.includes("localhost")) {
+        throw new Error("LLM_API_KEY is not set");
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (apiKey) {
+        if (isAnthropic && !baseUrl.includes("openrouter.ai")) {
+            headers["x-api-key"] = apiKey;
+        } else {
+            headers.Authorization = `Bearer ${apiKey}`;
+        }
+    }
+    if (isAnthropic) headers["anthropic-version"] = "2023-06-01";
+
+    const response = await fetch(`${baseUrl}/${isAnthropic ? "messages" : "chat/completions"}`, {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${config.openRouterApiKey}`,
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            model: config.openRouterModel,
+        headers,
+        body: JSON.stringify(isAnthropic ? {
+            model: config.llmModel,
+            max_tokens: 1024,
+            system: systemPrompt(),
+            messages: [{ role: "user", content: transcript }],
+        } : {
+            model: config.llmModel,
             messages: [
                 { role: "system", content: systemPrompt() },
                 { role: "user", content: transcript },
@@ -64,8 +88,11 @@ export async function extractJobs(transcript: string): Promise<ExtractedJob[]> {
         throw new Error("Job extraction failed");
     }
 
-    const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const content = payload.choices?.[0]?.message?.content ?? "";
+    const payload = await response.json() as {
+        choices?: Array<{ message?: { content?: unknown } }>;
+        content?: unknown;
+    };
+    const content = responseText(payload.choices?.[0]?.message?.content ?? payload.content);
     const start = content.indexOf("{");
     const end = content.lastIndexOf("}");
     if (start === -1 || end < start) {

@@ -134,7 +134,7 @@ cp api/.env.example api/.env
 cp ui/.env.example ui/.env
 ```
 
-`MONGO_URI` must include `replicaSet=rs0`. Set `JWT_SECRET` and `OPENROUTER_API_KEY`. Leave `SMTP_HOST` empty to print new-account emails in the API log, or set the SMTP values to send them. Then:
+`MONGO_URI` must include `replicaSet=rs0`. Set `JWT_SECRET`. The LLM defaults to a local Ollama server at `http://127.0.0.1:11434/v1` using `qwen3.5:2b`; start it with `ollama run qwen3.5:2b`. For OpenRouter, set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (or configure `LLM_API_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`). `LLM_API_FORMAT` accepts `openai` or `anthropic`, for OpenAI-compatible chat-completions or Claude/Anthropic Messages APIs. Leave `SMTP_HOST` empty to print new-account emails in the API log, or set the SMTP values to send them. Then:
 
 ```bash
 cd api && npm install && npm run dev
